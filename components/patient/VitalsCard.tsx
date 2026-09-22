@@ -1,206 +1,273 @@
-'use client';
-
 import React from 'react';
+import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Activity, AlertTriangle, Droplet, Heart, PhoneCall, Pill, Thermometer } from 'lucide-react-native';
 import { SectionCard } from '@/components/shared/SectionCard';
 import { StatusBadge } from '@/components/shared/StatusBadge';
-import { Heart, Activity, Thermometer, Droplet, UserCheck, ShieldAlert, Pill, PhoneCall, AlertTriangle } from 'lucide-react';
 import { Patient } from '@/lib/mockData';
+import { callPhone } from '@/lib/phone';
+import { colors, fonts } from '@/lib/theme';
 
 interface VitalsCardProps {
   patient: Patient;
 }
 
+type VitalTone = 'normal' | 'warning' | 'critical';
+
+function toneStyle(status: VitalTone) {
+  if (status === 'critical') return { bg: colors.red50, border: colors.red200, label: colors.red700 };
+  if (status === 'warning') return { bg: colors.amber50, border: colors.amber200, label: colors.amber800 };
+  return { bg: colors.emerald50, border: colors.emerald200, label: colors.emerald800 };
+}
+
 export const VitalsCard: React.FC<VitalsCardProps> = ({ patient }) => {
   const { vitals } = patient;
-
-  const getStatusColor = (status: 'normal' | 'warning' | 'critical') => {
-    switch (status) {
-      case 'critical':
-        return 'text-red-800 border-red-300 bg-red-50';
-      case 'warning':
-        return 'text-amber-900 border-amber-300 bg-amber-50';
-      default:
-        return 'text-emerald-900 border-emerald-300 bg-emerald-50';
-    }
-  };
+  const { width } = useWindowDimensions();
+  const vitalWidth = width >= 700 ? '31%' : '48%';
 
   return (
     <SectionCard
       title={
-        <div className="flex items-center justify-between w-full">
-          <div className="flex items-center gap-2 text-slate-900 font-bold text-lg">
-            <Activity className="w-5 h-5 text-red-600 animate-pulse" />
-            Patient Clinical Report &amp; Live Telemetry
-          </div>
-          <span className="text-xs font-mono text-blue-800 bg-blue-50 border border-blue-200 px-3 py-1 rounded-full font-bold">
-            {patient.registrationNumber}
-          </span>
-        </div>
+        <View style={styles.titleWrap}>
+          <View style={styles.titleRow}>
+            <Activity size={18} color={colors.red600} />
+            <Text style={styles.title}>Patient Clinical Report & Live Telemetry</Text>
+          </View>
+          <Text style={styles.reg}>{patient.registrationNumber}</Text>
+        </View>
       }
-      subtitle="Transmitted directly to en-route ambulance and receiving emergency room"
+      subtitle="Transmitted directly to the en-route ambulance and receiving emergency room"
     >
-      <div className="space-y-6">
-        {/* Patient Demographic Summary */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200 text-sm">
-          <div>
-            <span className="text-slate-500 text-xs block">Full Name:</span>
-            <span className="font-bold text-slate-900">{patient.name}</span>
-          </div>
-          <div>
-            <span className="text-slate-500 text-xs block">Age / Gender:</span>
-            <span className="font-semibold text-slate-800">{patient.age} yrs • {patient.gender}</span>
-          </div>
-          <div>
-            <span className="text-slate-500 text-xs block">Call Placed By:</span>
-            <span className="font-semibold text-blue-700">{patient.callerSource}</span>
-          </div>
-          <div>
-            <span className="text-slate-500 text-xs block">Dispatch Priority:</span>
-            <StatusBadge status="critical" label="CRITICAL CODE RED" size="sm" />
-          </div>
-        </div>
+      <View style={styles.demoGrid}>
+        <Demo label="Full Name" value={patient.name} />
+        <Demo label="Age / Gender" value={`${patient.age} yrs · ${patient.gender}`} />
+        <Demo label="Call Placed By" value={patient.callerSource} valueColor={colors.blue700} />
+        <View style={styles.demo}>
+          <Text style={styles.demoLabel}>Dispatch Priority</Text>
+          <StatusBadge status="critical" label="CRITICAL CODE RED" size="sm" />
+        </View>
+      </View>
 
-        {/* Dynamic Vitals Grid */}
-        <div>
-          <h4 className="text-xs font-mono font-bold uppercase text-slate-500 mb-3 flex items-center gap-2">
-            <Heart className="w-4 h-4 text-red-600" />
-            Live Vital Signs (Range Indicators)
-          </h4>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-            {/* BP */}
-            <div className={`p-3 rounded-xl border flex flex-col justify-between shadow-sm ${getStatusColor(vitals.bpStatus)}`}>
-              <div className="text-xs font-semibold text-slate-700 flex items-center justify-between">
-                <span>Blood Pressure</span>
-                <Heart className="w-3.5 h-3.5 text-red-600" />
-              </div>
-              <div className="my-2">
-                <span className="text-xl font-extrabold font-mono text-slate-900">{vitals.bpSystolic}/{vitals.bpDiastolic}</span>
-                <span className="text-[10px] block text-slate-600">mmHg (Syst/Diast)</span>
-              </div>
-              <span className="text-[10px] font-mono uppercase font-bold text-red-700">
-                {vitals.bpStatus === 'critical' ? 'Elevated Critical' : 'Normal'}
-              </span>
-            </div>
+      <View style={styles.sectionHead}>
+        <Heart size={14} color={colors.red600} />
+        <Text style={styles.sectionKicker}>LIVE VITAL SIGNS</Text>
+      </View>
+      <View style={styles.vitalGrid}>
+        <Vital
+          width={vitalWidth}
+          label="Blood Pressure"
+          value={`${vitals.bpSystolic}/${vitals.bpDiastolic}`}
+          unit="mmHg (Syst/Diast)"
+          note={vitals.bpStatus === 'critical' ? 'Elevated Critical' : vitals.bpStatus === 'warning' ? 'Elevated' : 'Normal'}
+          status={vitals.bpStatus}
+          icon={<Heart size={14} color={colors.red600} />}
+        />
+        <Vital
+          width={vitalWidth}
+          label="Blood Sugar"
+          value={`${vitals.bloodSugar}`}
+          unit="mg/dL (Random)"
+          note={vitals.bloodSugarStatus === 'warning' ? 'Slightly High' : vitals.bloodSugarStatus === 'critical' ? 'Critical' : 'Normal'}
+          status={vitals.bloodSugarStatus}
+          icon={<Droplet size={14} color={colors.amber600} />}
+        />
+        <Vital
+          width={vitalWidth}
+          label="Heart Rate"
+          value={`${vitals.heartRate}`}
+          unit="BPM"
+          note={vitals.heartRateStatus === 'warning' ? 'Elevated' : vitals.heartRateStatus === 'critical' ? 'Critical' : 'Normal'}
+          status={vitals.heartRateStatus}
+          icon={<Activity size={14} color={colors.blue600} />}
+        />
+        <Vital
+          width={vitalWidth}
+          label="SpO₂ Saturation"
+          value={`${vitals.spo2}%`}
+          unit="O2 Oxygen Level"
+          note={vitals.spo2Status === 'warning' ? 'Mild Hypoxia' : vitals.spo2Status === 'critical' ? 'Severe Hypoxia' : 'Normal'}
+          status={vitals.spo2Status}
+          icon={<Activity size={14} color={colors.cyan600} />}
+        />
+        <Vital
+          width={vitalWidth}
+          label="Temperature"
+          value={`${vitals.temperature}°F`}
+          unit="Body Temp"
+          note={vitals.tempStatus === 'normal' ? 'Afebrile Normal' : 'Fever'}
+          status={vitals.tempStatus}
+          icon={<Thermometer size={14} color={colors.emerald600} />}
+        />
+      </View>
 
-            {/* Blood Sugar */}
-            <div className={`p-3 rounded-xl border flex flex-col justify-between shadow-sm ${getStatusColor(vitals.bloodSugarStatus)}`}>
-              <div className="text-xs font-semibold text-slate-700 flex items-center justify-between">
-                <span>Blood Sugar</span>
-                <Droplet className="w-3.5 h-3.5 text-amber-600" />
-              </div>
-              <div className="my-2">
-                <span className="text-xl font-extrabold font-mono text-slate-900">{vitals.bloodSugar}</span>
-                <span className="text-[10px] block text-slate-600">mg/dL (Random)</span>
-              </div>
-              <span className="text-[10px] font-mono uppercase font-bold text-amber-800">
-                {vitals.bloodSugarStatus === 'warning' ? 'Slightly High' : 'Normal'}
-              </span>
-            </div>
+      <View style={styles.panel}>
+        <View style={styles.sectionHead}>
+          <AlertTriangle size={14} color={colors.amber600} />
+          <Text style={styles.sectionKicker}>REPORTED SYMPTOMS</Text>
+        </View>
+        <View style={styles.chips}>
+          {patient.reportedSymptoms.map((symptom) => (
+            <Text key={symptom} style={styles.symptom}>
+              {symptom}
+            </Text>
+          ))}
+        </View>
+      </View>
 
-            {/* Pulse */}
-            <div className={`p-3 rounded-xl border flex flex-col justify-between shadow-sm ${getStatusColor(vitals.heartRateStatus)}`}>
-              <div className="text-xs font-semibold text-slate-700 flex items-center justify-between">
-                <span>Heart Rate</span>
-                <Activity className="w-3.5 h-3.5 text-blue-600" />
-              </div>
-              <div className="my-2">
-                <span className="text-xl font-extrabold font-mono text-slate-900">{vitals.heartRate}</span>
-                <span className="text-[10px] block text-slate-600">BPM (Tachycardia)</span>
-              </div>
-              <span className="text-[10px] font-mono uppercase font-bold text-amber-800">
-                {vitals.heartRateStatus === 'warning' ? 'Elevated' : 'Normal'}
-              </span>
-            </div>
+      <View style={styles.panel}>
+        <View style={styles.sectionHead}>
+          <Pill size={14} color={colors.purple600} />
+          <Text style={styles.sectionKicker}>ALLERGIES & MEDICATIONS</Text>
+        </View>
+        <Text style={styles.metaLine}>
+          <Text style={styles.metaLabel}>Allergies: </Text>
+          <Text style={styles.allergy}>{patient.allergies.join(', ')}</Text>
+        </Text>
+        <Text style={styles.metaLine}>
+          <Text style={styles.metaLabel}>Medications: </Text>
+          {patient.medications.join(', ')}
+        </Text>
+        {patient.knownConditions.length > 0 ? (
+          <Text style={styles.metaLine}>
+            <Text style={styles.metaLabel}>Known conditions: </Text>
+            {patient.knownConditions.join(', ')}
+          </Text>
+        ) : null}
+      </View>
 
-            {/* SpO2 */}
-            <div className={`p-3 rounded-xl border flex flex-col justify-between shadow-sm ${getStatusColor(vitals.spo2Status)}`}>
-              <div className="text-xs font-semibold text-slate-700 flex items-center justify-between">
-                <span>SpO₂ Saturation</span>
-                <Activity className="w-3.5 h-3.5 text-cyan-600" />
-              </div>
-              <div className="my-2">
-                <span className="text-xl font-extrabold font-mono text-slate-900">{vitals.spo2}%</span>
-                <span className="text-[10px] block text-slate-600">O2 Oxygen Level</span>
-              </div>
-              <span className="text-[10px] font-mono uppercase font-bold text-amber-800">
-                {vitals.spo2Status === 'warning' ? 'Mild Hypoxia' : 'Normal'}
-              </span>
-            </div>
-
-            {/* Temp */}
-            <div className={`p-3 rounded-xl border flex flex-col justify-between shadow-sm ${getStatusColor(vitals.tempStatus)}`}>
-              <div className="text-xs font-semibold text-slate-700 flex items-center justify-between">
-                <span>Temperature</span>
-                <Thermometer className="w-3.5 h-3.5 text-emerald-600" />
-              </div>
-              <div className="my-2">
-                <span className="text-xl font-extrabold font-mono text-slate-900">{vitals.temperature}°F</span>
-                <span className="text-[10px] block text-slate-600">Body Temp</span>
-              </div>
-              <span className="text-[10px] font-mono uppercase font-bold text-emerald-800">
-                {vitals.tempStatus === 'normal' ? 'Afebrile Normal' : 'Fever'}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Symptoms, Allergies & Known Conditions */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2">
-            <span className="text-xs font-mono font-bold text-slate-500 uppercase flex items-center gap-1.5">
-              <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
-              Reported Symptoms
-            </span>
-            <div className="flex flex-wrap gap-1.5 pt-1">
-              {patient.reportedSymptoms.map((symp) => (
-                <span key={symp} className="px-3 py-1 bg-red-100 text-red-800 border border-red-200 rounded-lg text-xs font-bold shadow-sm">
-                  {symp}
-                </span>
-              ))}
-            </div>
-          </div>
-
-          <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2">
-            <span className="text-xs font-mono font-bold text-slate-500 uppercase flex items-center gap-1.5">
-              <Pill className="w-3.5 h-3.5 text-purple-600" />
-              Allergies &amp; Ongoing Medications
-            </span>
-            <div className="space-y-1 text-xs">
-              <div>
-                <span className="text-slate-500">Allergies: </span>
-                <span className="font-bold text-red-600">{patient.allergies.join(', ')}</span>
-              </div>
-              <div>
-                <span className="text-slate-500">Medications: </span>
-                <span className="text-slate-800">{patient.medications.join(', ')}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Emergency Contact Info */}
-        <div className="bg-blue-50 p-4 rounded-xl border border-blue-200 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-700">
-              <PhoneCall className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="text-xs text-slate-500">Emergency Contact (Placed Call)</div>
-              <div className="font-bold text-slate-900 text-sm">
-                {patient.emergencyContact.name} ({patient.emergencyContact.relation})
-              </div>
-            </div>
-          </div>
-
-          <a
-            href={`tel:${patient.emergencyContact.phone}`}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-md transition-all"
-          >
-            <PhoneCall className="w-4 h-4" />
-            <span>Call {patient.emergencyContact.phone}</span>
-          </a>
-        </div>
-      </div>
+      <View style={styles.contact}>
+        <View style={styles.contactIcon}>
+          <PhoneCall size={18} color={colors.blue700} />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.metaLabel}>Emergency Contact</Text>
+          <Text style={styles.contactName}>
+            {patient.emergencyContact.name} ({patient.emergencyContact.relation})
+          </Text>
+        </View>
+        <Pressable style={styles.callBtn} onPress={() => callPhone(patient.emergencyContact.phone)}>
+          <PhoneCall size={14} color={colors.white} />
+          <Text style={styles.callBtnText}>Call</Text>
+        </Pressable>
+      </View>
     </SectionCard>
   );
 };
+
+function Demo({ label, value, valueColor = colors.slate900 }: { label: string; value: string; valueColor?: string }) {
+  return (
+    <View style={styles.demo}>
+      <Text style={styles.demoLabel}>{label}</Text>
+      <Text style={[styles.demoValue, { color: valueColor }]}>{value}</Text>
+    </View>
+  );
+}
+
+function Vital({
+  width,
+  label,
+  value,
+  unit,
+  note,
+  status,
+  icon,
+}: {
+  width: '48%' | '31%';
+  label: string;
+  value: string;
+  unit: string;
+  note: string;
+  status: VitalTone;
+  icon: React.ReactNode;
+}) {
+  const tone = toneStyle(status);
+  return (
+    <View style={[styles.vital, { width, backgroundColor: tone.bg, borderColor: tone.border }]}>
+      <View style={styles.vitalHead}>
+        <Text style={styles.vitalLabel}>{label}</Text>
+        {icon}
+      </View>
+      <Text style={styles.vitalValue}>{value}</Text>
+      <Text style={styles.vitalUnit}>{unit}</Text>
+      <Text style={[styles.vitalNote, { color: tone.label }]}>{note}</Text>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  titleWrap: { gap: 8 },
+  titleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  title: { flex: 1, fontFamily: fonts.bold, fontSize: 16, color: colors.slate900 },
+  reg: {
+    alignSelf: 'flex-start',
+    backgroundColor: colors.blue50,
+    color: colors.blue800,
+    borderWidth: 1,
+    borderColor: colors.blue200,
+    borderRadius: 999,
+    overflow: 'hidden',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    fontFamily: fonts.bold,
+    fontSize: 11,
+  },
+  demoGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, backgroundColor: '#F8FAFC', borderRadius: 14, borderWidth: 1, borderColor: colors.border, padding: 10 },
+  demo: { width: '47%', gap: 2 },
+  demoLabel: { fontFamily: fonts.regular, fontSize: 11, color: colors.slate500 },
+  demoValue: { fontFamily: fonts.bold, fontSize: 13, color: colors.slate900 },
+  sectionHead: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 16, marginBottom: 8 },
+  sectionKicker: { fontFamily: fonts.bold, fontSize: 11, color: colors.slate500, letterSpacing: 0.4 },
+  vitalGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  vital: { borderWidth: 1, borderRadius: 14, padding: 10, minHeight: 118, justifyContent: 'space-between' },
+  vitalHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 6 },
+  vitalLabel: { flex: 1, fontFamily: fonts.semibold, fontSize: 12, color: colors.slate700 },
+  vitalValue: { fontFamily: fonts.extrabold, fontSize: 22, color: colors.slate900, marginTop: 8 },
+  vitalUnit: { fontFamily: fonts.regular, fontSize: 10, color: colors.slate600 },
+  vitalNote: { fontFamily: fonts.bold, fontSize: 10, marginTop: 6, textTransform: 'uppercase' },
+  panel: { backgroundColor: '#F8FAFC', borderRadius: 14, borderWidth: 1, borderColor: colors.border, padding: 12, marginTop: 12 },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  symptom: {
+    backgroundColor: colors.red100,
+    color: colors.red800,
+    borderWidth: 1,
+    borderColor: colors.red200,
+    borderRadius: 8,
+    overflow: 'hidden',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    fontFamily: fonts.bold,
+    fontSize: 12,
+  },
+  metaLine: { fontFamily: fonts.regular, fontSize: 13, color: colors.slate800, marginTop: 4 },
+  metaLabel: { color: colors.slate500, fontFamily: fonts.regular, fontSize: 12 },
+  allergy: { color: colors.red600, fontFamily: fonts.bold },
+  contact: {
+    marginTop: 12,
+    backgroundColor: colors.blue50,
+    borderWidth: 1,
+    borderColor: colors.blue200,
+    borderRadius: 14,
+    padding: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  contactIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.blue100,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  contactName: { fontFamily: fonts.bold, fontSize: 13, color: colors.slate900, marginTop: 2 },
+  callBtn: {
+    backgroundColor: colors.blue600,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  callBtnText: { color: colors.white, fontFamily: fonts.bold, fontSize: 12 },
+});

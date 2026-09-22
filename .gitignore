@@ -1,42 +1,16 @@
-# dependencies
-/node_modules
-/.pnp
-.pnp.js
-node_modules
-
-# testing
-/coverage
-
-# next.js build output
-/.next/
-/out/
-
-# production
-/build
-
-# debug logs
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# local env files
-.env*.local
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-
-# vercel & IDEs
-.vercel
-.idea
-.vscode
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
-
-# OS metadata
+node_modules/
+.expo/
+dist/
+web-build/
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+npm-debug.*
 .DS_Store
-Thumbs.db
+*.tsbuildinfo
+expo-env.d.ts
+.avd/
+.shots/

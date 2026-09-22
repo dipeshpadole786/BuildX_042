@@ -1,4 +1,6 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Hospital, Patient, Ambulance } from './mockData';
+import { timeoutSignal } from './net';
 
 export interface LiveLocationData {
   userLat: number;
@@ -65,7 +67,7 @@ export async function getCityNameFromCoords(lat: number, lng: number): Promise<s
     const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=16`;
     const res = await fetch(url, {
       headers: { 'User-Agent': 'PulseEmergencyApp/1.0 (contact@pulse-emergency.app)' },
-      signal: AbortSignal.timeout(4000)
+      signal: timeoutSignal(4000)
     });
     if (res.ok) {
       const data = await res.json();
@@ -92,7 +94,7 @@ export async function geocodeCityOrAddress(query: string): Promise<[number, numb
     const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`;
     const res = await fetch(url, {
       headers: { 'User-Agent': 'PulseEmergencyApp/1.0 (contact@pulse-emergency.app)' },
-      signal: AbortSignal.timeout(4000)
+      signal: timeoutSignal(4000)
     });
     if (res.ok) {
       const data = await res.json();
@@ -157,7 +159,7 @@ async function fetchHospitalsFromOverpass(lat: number, lng: number): Promise<Hos
         out center 30;
       `;
       const url = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(overpassQuery)}`;
-      const res = await fetch(url, { signal: AbortSignal.timeout(9000) });
+      const res = await fetch(url, { signal: timeoutSignal(9000) });
       if (!res.ok) continue;
       const data = await res.json();
       if (!data || !Array.isArray(data.elements) || data.elements.length === 0) continue;
@@ -228,7 +230,7 @@ async function fetchHospitalsFromOverpass(lat: number, lng: number): Promise<Hos
         return results;
       }
     } catch (err) {
-      console.warn(`Overpass fetch error at radius ${radius}:`, err);
+      console.log(`Overpass fetch error at radius ${radius}:`, err);
     }
   }
   return [];
@@ -258,7 +260,7 @@ async function fetchHospitalsFromNominatim(lat: number, lng: number): Promise<Ho
         `&limit=15`;
       const res = await fetch(searchUrl, {
         headers: { 'User-Agent': 'PulseEmergencyApp/1.0 (contact@pulse-emergency.app)' },
-        signal: AbortSignal.timeout(5000)
+        signal: timeoutSignal(5000)
       });
       if (!res.ok) continue;
       const data = await res.json();
@@ -373,14 +375,13 @@ export async function getRealLocationAndHospitals(
     nearbyHospitals = rawCandidates;
   }
 
-  const assignedHospital = nearbyHospitals[0];
+  const assignedHospital =
+    nearbyHospitals[0] ?? generateDynamicLocalHospitals(userLat, userLng, locationName)[0];
 
-  if (typeof window !== 'undefined') {
-    try {
-      localStorage.setItem(ACTIVE_HOSPITAL_KEY, JSON.stringify(assignedHospital));
-    } catch (e) {
-      console.warn("LocalStorage save error:", e);
-    }
+  try {
+    await AsyncStorage.setItem(ACTIVE_HOSPITAL_KEY, JSON.stringify(assignedHospital));
+  } catch (e) {
+    console.warn('Storage save error:', e);
   }
 
   const ambLat = userLat - 0.004;
@@ -448,18 +449,16 @@ export async function getRealLocationAndHospitals(
 }
 
 /**
- * Retrieve saved active assigned hospital from LocalStorage
+ * Retrieve the saved active assigned hospital from device storage.
  */
-export function getSavedAssignedHospital(defaultHospital: Hospital): Hospital {
-  if (typeof window !== 'undefined') {
-    try {
-      const saved = localStorage.getItem(ACTIVE_HOSPITAL_KEY);
-      if (saved) {
-        return JSON.parse(saved);
-      }
-    } catch (e) {
-      console.warn("LocalStorage read error:", e);
+export async function getSavedAssignedHospital(defaultHospital: Hospital): Promise<Hospital> {
+  try {
+    const saved = await AsyncStorage.getItem(ACTIVE_HOSPITAL_KEY);
+    if (saved) {
+      return JSON.parse(saved) as Hospital;
     }
+  } catch (e) {
+    console.warn('Storage read error:', e);
   }
   return defaultHospital;
 }

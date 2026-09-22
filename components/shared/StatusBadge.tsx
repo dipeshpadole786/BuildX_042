@@ -1,53 +1,81 @@
 import React from 'react';
-import { clsx } from 'clsx';
+import { StyleSheet, Text, View, ViewStyle } from 'react-native';
+import { colors, fonts } from '@/lib/theme';
 
-export type UrgencyStatus = 'critical' | 'unavailable' | 'in-progress' | 'limited' | 'available' | 'complete' | string;
+export type UrgencyStatus =
+  | 'critical'
+  | 'unavailable'
+  | 'in-progress'
+  | 'limited'
+  | 'available'
+  | 'complete'
+  | string;
 
 interface StatusBadgeProps {
   status: UrgencyStatus;
   label?: string;
   size?: 'sm' | 'md' | 'lg';
-  className?: string;
-  icon?: React.ReactNode;
+  style?: ViewStyle;
 }
 
-export const StatusBadge: React.FC<StatusBadgeProps> = ({
-  status,
-  label,
-  size = 'md',
-  className,
-  icon
-}) => {
-  const normalizedStatus = status.toLowerCase();
+const CRITICAL = ['critical', 'unavailable', 'red', 'high'];
+const PROGRESS = ['in-progress', 'limited', 'yellow', 'medium', 'en route', 'dispatched'];
+const READY = ['available', 'complete', 'green', 'low', 'picked up', 'arrived', 'ready'];
 
-  let colorStyles = 'bg-slate-100 text-slate-700 border-slate-300';
-
-  if (['critical', 'unavailable', 'red', 'high'].includes(normalizedStatus)) {
-    colorStyles = 'bg-red-50 text-red-700 border-red-300 shadow-sm';
-  } else if (['in-progress', 'limited', 'yellow', 'medium', 'en route', 'dispatched'].includes(normalizedStatus)) {
-    colorStyles = 'bg-amber-50 text-amber-800 border-amber-300 shadow-sm';
-  } else if (['available', 'complete', 'green', 'low', 'picked up', 'arrived', 'ready'].includes(normalizedStatus)) {
-    colorStyles = 'bg-emerald-50 text-emerald-800 border-emerald-300 shadow-sm';
-  }
-
-  const sizeStyles = {
-    sm: 'px-2.5 py-0.5 text-xs border font-semibold rounded-full',
-    md: 'px-3 py-1 text-sm border font-bold rounded-full',
-    lg: 'px-4 py-1.5 text-base border-2 font-extrabold rounded-full'
-  }[size];
-
-  const displayLabel = label || status.toUpperCase();
+export const StatusBadge: React.FC<StatusBadgeProps> = ({ status, label, size = 'md', style }) => {
+  const normalized = status.toLowerCase();
+  const tone = CRITICAL.includes(normalized) ? 'critical' : PROGRESS.includes(normalized) ? 'progress' : READY.includes(normalized) ? 'ready' : 'neutral';
+  const display = label || status.toUpperCase();
 
   return (
-    <span className={clsx("inline-flex items-center gap-1.5 font-mono uppercase transition-all duration-200", colorStyles, sizeStyles, className)}>
-      <span className={clsx("w-2 h-2 rounded-full animate-pulse", {
-        'bg-red-600': ['critical', 'unavailable', 'red', 'high'].includes(normalizedStatus),
-        'bg-amber-500': ['in-progress', 'limited', 'yellow', 'medium', 'en route', 'dispatched'].includes(normalizedStatus),
-        'bg-emerald-600': ['available', 'complete', 'green', 'low', 'picked up', 'arrived', 'ready'].includes(normalizedStatus),
-        'bg-slate-500': !['critical', 'unavailable', 'red', 'high', 'in-progress', 'limited', 'yellow', 'medium', 'en route', 'dispatched', 'available', 'complete', 'green', 'low', 'picked up', 'arrived', 'ready'].includes(normalizedStatus)
-      })} />
-      {icon}
-      <span>{displayLabel}</span>
-    </span>
+    <View style={[styles.base, styles[tone], sizeStyles[size], style]}>
+      <View style={[styles.dot, dotStyles[tone]]} />
+      <Text style={[styles.label, labelStyles[tone], sizeText[size]]} numberOfLines={2}>
+        {display}
+      </Text>
+    </View>
   );
 };
+
+const styles = StyleSheet.create({
+  base: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    gap: 6,
+    borderWidth: 1,
+    borderRadius: 999,
+  },
+  critical: { backgroundColor: colors.red50, borderColor: colors.red200 },
+  progress: { backgroundColor: colors.amber50, borderColor: colors.amber200 },
+  ready: { backgroundColor: colors.emerald50, borderColor: colors.emerald200 },
+  neutral: { backgroundColor: '#F1F5F9', borderColor: colors.borderStrong },
+  dot: { width: 8, height: 8, borderRadius: 4 },
+  label: { fontFamily: fonts.semibold, textTransform: 'uppercase', flexShrink: 1 },
+});
+
+const sizeStyles = StyleSheet.create({
+  sm: { paddingHorizontal: 8, paddingVertical: 3 },
+  md: { paddingHorizontal: 10, paddingVertical: 5 },
+  lg: { paddingHorizontal: 14, paddingVertical: 7, borderWidth: 2 },
+});
+
+const sizeText = StyleSheet.create({
+  sm: { fontSize: 10 },
+  md: { fontSize: 12 },
+  lg: { fontSize: 14, fontFamily: fonts.extrabold },
+});
+
+const labelStyles = StyleSheet.create({
+  critical: { color: colors.red700 },
+  progress: { color: colors.amber800 },
+  ready: { color: colors.emerald800 },
+  neutral: { color: colors.slate700 },
+});
+
+const dotStyles = StyleSheet.create({
+  critical: { backgroundColor: colors.red600 },
+  progress: { backgroundColor: colors.amber500 },
+  ready: { backgroundColor: colors.emerald600 },
+  neutral: { backgroundColor: colors.slate500 },
+});

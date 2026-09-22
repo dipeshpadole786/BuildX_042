@@ -1,66 +1,95 @@
-'use client';
-
 import React from 'react';
+import { StyleSheet, Text, View } from 'react-native';
+import { CheckCircle2, Clock, Hospital, Phone, Truck, UserCheck } from 'lucide-react-native';
 import { SectionCard } from '@/components/shared/SectionCard';
-import { Clock, Phone, Truck, UserCheck, Hospital, CheckCircle2 } from 'lucide-react';
 import { mockTimelineEvents } from '@/lib/mockData';
+import { colors, fonts } from '@/lib/theme';
+
+function EventIcon({ type }: { type: string }) {
+  switch (type) {
+    case 'phone':
+      return <Phone size={14} color={colors.blue600} />;
+    case 'truck':
+      return <Truck size={14} color={colors.amber600} />;
+    case 'user':
+      return <UserCheck size={14} color={colors.emerald600} />;
+    case 'hospital':
+      return <Hospital size={14} color={colors.purple600} />;
+    default:
+      return <CheckCircle2 size={14} color={colors.slate400} />;
+  }
+}
 
 export const StatusTimeline: React.FC = () => {
-  const getEventIcon = (iconType: string) => {
-    switch (iconType) {
-      case 'phone':
-        return <Phone className="w-4 h-4 text-blue-600" />;
-      case 'truck':
-        return <Truck className="w-4 h-4 text-amber-600" />;
-      case 'user':
-        return <UserCheck className="w-4 h-4 text-emerald-600" />;
-      case 'hospital':
-        return <Hospital className="w-4 h-4 text-purple-600" />;
-      default:
-        return <CheckCircle2 className="w-4 h-4 text-slate-400" />;
-    }
-  };
-
   return (
     <SectionCard
       title={
-        <div className="flex items-center gap-2 text-slate-900 font-bold text-base">
-          <Clock className="w-5 h-5 text-blue-600" />
-          Incident Event Audit Log &amp; Post-Incident Timeline
-        </div>
+        <View style={styles.titleRow}>
+          <Clock size={18} color={colors.blue600} />
+          <Text style={styles.title}>Incident Event Audit Log</Text>
+        </View>
       }
-      subtitle="Verifiable chronological log for dispatch center, ambulance crew, and emergency room"
+      subtitle="Chronological log for dispatch, the ambulance crew, and the emergency room"
     >
-      <div className="relative pl-6 space-y-6 before:absolute before:left-3 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-200">
-        {mockTimelineEvents.map((evt) => (
-          <div key={evt.id} className="relative flex items-start gap-4 group">
-            {/* Timeline Dot */}
-            <div
-              className={`absolute -left-6 top-1 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
-                evt.completed
-                  ? 'bg-white border-emerald-600 shadow-sm'
-                  : 'bg-slate-100 border-slate-300 text-slate-400'
-              }`}
-            >
-              {getEventIcon(evt.iconType)}
-            </div>
-
-            <div className="flex-1 bg-slate-50 p-4 rounded-xl border border-slate-200 hover:border-slate-300 transition-all shadow-sm">
-              <div className="flex items-center justify-between gap-2 mb-1">
-                <span className="font-bold text-sm text-slate-900">{evt.stageName}</span>
-                <span
-                  className={`text-xs font-mono px-2 py-0.5 rounded font-medium ${
-                    evt.completed ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' : 'bg-slate-200 text-slate-600'
-                  }`}
-                >
-                  {evt.timestamp}
-                </span>
-              </div>
-              <p className="text-xs text-slate-600 leading-relaxed">{evt.description}</p>
-            </div>
-          </div>
+      <View style={styles.list}>
+        <View style={styles.line} />
+        {mockTimelineEvents.map((event) => (
+          <View key={event.id} style={styles.item}>
+            <View style={[styles.dot, event.completed ? styles.dotDone : styles.dotPending]}>
+              <EventIcon type={event.iconType} />
+            </View>
+            <View style={styles.card}>
+              <View style={styles.cardHead}>
+                <Text style={styles.stage}>{event.stageName}</Text>
+                <Text style={[styles.time, event.completed ? styles.timeDone : styles.timePending]}>{event.timestamp}</Text>
+              </View>
+              <Text style={styles.description}>{event.description}</Text>
+            </View>
+          </View>
         ))}
-      </div>
+      </View>
     </SectionCard>
   );
 };
+
+const styles = StyleSheet.create({
+  titleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  title: { fontFamily: fonts.bold, fontSize: 16, color: colors.slate900, flex: 1 },
+  list: { paddingLeft: 8, gap: 14 },
+  line: {
+    position: 'absolute',
+    left: 19,
+    top: 8,
+    bottom: 8,
+    width: 2,
+    backgroundColor: '#E2E8F0',
+  },
+  item: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
+  dot: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.white,
+    zIndex: 1,
+  },
+  dotDone: { borderColor: colors.emerald600 },
+  dotPending: { borderColor: colors.borderStrong, backgroundColor: '#F1F5F9' },
+  card: {
+    flex: 1,
+    backgroundColor: '#F8FAFC',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: 12,
+    gap: 6,
+  },
+  cardHead: { flexDirection: 'row', justifyContent: 'space-between', gap: 8, alignItems: 'flex-start' },
+  stage: { flex: 1, fontFamily: fonts.bold, fontSize: 13, color: colors.slate900 },
+  time: { fontFamily: fonts.medium, fontSize: 10, borderRadius: 6, overflow: 'hidden', paddingHorizontal: 6, paddingVertical: 2 },
+  timeDone: { backgroundColor: colors.emerald100, color: colors.emerald800 },
+  timePending: { backgroundColor: '#E2E8F0', color: colors.slate600 },
+  description: { fontFamily: fonts.regular, fontSize: 12, color: colors.slate600, lineHeight: 17 },
+});

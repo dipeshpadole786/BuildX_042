@@ -1,207 +1,250 @@
-'use client';
-
 import React, { useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import {
+  Activity,
+  AlertOctagon,
+  AlertTriangle,
+  CheckCircle2,
+  Filter,
+  Microscope,
+  Scan,
+  ShieldCheck,
+  Stethoscope,
+} from 'lucide-react-native';
 import { StatusBadge } from '@/components/shared/StatusBadge';
-import { ShieldCheck, Activity, Stethoscope, Microscope, Scan, Filter, CheckCircle2, AlertTriangle, AlertOctagon } from 'lucide-react';
-import { mockHospitals, HospitalResource } from '@/lib/mockData';
+import { HospitalResource, mockHospitals } from '@/lib/mockData';
+import { colors, fonts } from '@/lib/theme';
+
+const CATEGORIES = [
+  'All',
+  'General Capacity',
+  'Operation Theatre Equipment',
+  'Patient Monitoring Equipment',
+  'Diagnostic Imaging',
+  'Laboratory',
+];
 
 export const ResourceGrid: React.FC = () => {
-  const initialResources = mockHospitals[0].resources;
-  const [resources, setResources] = useState<HospitalResource[]>(initialResources);
-  const [selectedCategory, setSelectedCategory] = useState<string>('All');
-  const [filterStatus, setFilterStatus] = useState<string>('All');
-
-  const categories = [
-    'All',
-    'General Capacity',
-    'Operation Theatre Equipment',
-    'Patient Monitoring Equipment',
-    'Diagnostic Imaging',
-    'Laboratory'
-  ];
-
-  const statusFilters: { label: string; value: string; icon: React.ReactNode; activeClass: string }[] = [
-    { label: 'All', value: 'All', icon: <Filter className="w-3.5 h-3.5" />, activeClass: 'bg-blue-600 text-white border-blue-600' },
-    { label: 'Available', value: 'Available', icon: <CheckCircle2 className="w-3.5 h-3.5" />, activeClass: 'bg-emerald-600 text-white border-emerald-600' },
-    { label: 'Limited', value: 'Limited', icon: <AlertTriangle className="w-3.5 h-3.5" />, activeClass: 'bg-amber-500 text-white border-amber-500' },
-    { label: 'Critical', value: 'Critical', icon: <AlertOctagon className="w-3.5 h-3.5" />, activeClass: 'bg-red-600 text-white border-red-600' },
-  ];
+  const [resources, setResources] = useState<HospitalResource[]>(mockHospitals[0].resources);
+  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [filterStatus, setFilterStatus] = useState('All');
+  const { width } = useWindowDimensions();
+  const cardWidth = width >= 760 ? '31.5%' : '100%';
 
   const cycleStatus = (id: string) => {
     setResources((prev) =>
       prev.map((item) => {
-        if (item.id === id) {
-          let nextStatus: 'Available' | 'Limited' | 'Critical';
-          let nextAvail = item.available;
-
-          if (item.status === 'Available') {
-            nextStatus = 'Limited';
-            nextAvail = Math.max(0, item.available - 1);
-          } else if (item.status === 'Limited') {
-            nextStatus = 'Critical';
-            nextAvail = 0;
-          } else {
-            nextStatus = 'Available';
-            nextAvail = item.total;
-          }
-
-          return { ...item, status: nextStatus, available: nextAvail };
+        if (item.id !== id) return item;
+        if (item.status === 'Available') {
+          return { ...item, status: 'Limited', available: Math.max(0, item.available - 1) };
         }
-        return item;
+        if (item.status === 'Limited') {
+          return { ...item, status: 'Critical', available: 0 };
+        }
+        return { ...item, status: 'Available', available: item.total };
       })
     );
   };
 
-  const filteredResources = resources.filter((item) => {
-    const matchesCat = selectedCategory === 'All' || item.category === selectedCategory;
-    const matchesStat = filterStatus === 'All' || item.status.toLowerCase() === filterStatus.toLowerCase();
-    return matchesCat && matchesStat;
+  const filtered = resources.filter((item) => {
+    const matchesCategory = selectedCategory === 'All' || item.category === selectedCategory;
+    const matchesStatus = filterStatus === 'All' || item.status.toLowerCase() === filterStatus.toLowerCase();
+    return matchesCategory && matchesStatus;
   });
 
-  const getCategoryIcon = (cat: string) => {
-    switch (cat) {
-      case 'General Capacity':
-        return <Activity className="w-4 h-4 text-emerald-600 flex-shrink-0" />;
-      case 'Operation Theatre Equipment':
-        return <Stethoscope className="w-4 h-4 text-blue-600 flex-shrink-0" />;
-      case 'Patient Monitoring Equipment':
-        return <ShieldCheck className="w-4 h-4 text-cyan-600 flex-shrink-0" />;
-      case 'Diagnostic Imaging':
-        return <Scan className="w-4 h-4 text-amber-600 flex-shrink-0" />;
-      case 'Laboratory':
-        return <Microscope className="w-4 h-4 text-purple-600 flex-shrink-0" />;
-      default:
-        return <Filter className="w-4 h-4 text-slate-400 flex-shrink-0" />;
-    }
-  };
-
-  // Count per status for summary badges
   const counts = {
-    available: resources.filter((r) => r.status === 'Available').length,
-    limited: resources.filter((r) => r.status === 'Limited').length,
-    critical: resources.filter((r) => r.status === 'Critical').length,
+    available: resources.filter((item) => item.status === 'Available').length,
+    limited: resources.filter((item) => item.status === 'Limited').length,
+    critical: resources.filter((item) => item.status === 'Critical').length,
   };
 
   return (
-    <div className="space-y-4">
+    <View style={styles.wrap}>
+      <View style={styles.head}>
+        <View style={{ flex: 1, gap: 4 }}>
+          <View style={styles.titleRow}>
+            <ShieldCheck size={18} color={colors.emerald600} />
+            <Text style={styles.title}>Facility Readiness & Equipment</Text>
+          </View>
+          <Text style={styles.subtitle}>Tap a resource to cycle Available, Limited, and Critical</Text>
+        </View>
+      </View>
 
-      {/* ── Header ── */}
-      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
-        <div>
-          <h2 className="text-lg sm:text-xl font-bold text-slate-900 flex items-center gap-2">
-            <ShieldCheck className="w-5 h-5 text-emerald-600 flex-shrink-0" />
-            Facility Readiness &amp; Equipment Dashboard
-          </h2>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Interactive readiness matrix for emergency ambulance dispatch routing
-          </p>
-        </div>
+      <View style={styles.summary}>
+        <Text style={styles.okChip}>✓ {counts.available} OK</Text>
+        <Text style={styles.limitedChip}>⚠ {counts.limited} Limited</Text>
+        <Text style={styles.criticalChip}>✕ {counts.critical} Critical</Text>
+      </View>
 
-        {/* Status Summary Chips */}
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <span className="text-xs px-2 py-1 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 font-bold">
-            ✓ {counts.available} OK
-          </span>
-          <span className="text-xs px-2 py-1 rounded-lg bg-amber-50 border border-amber-200 text-amber-700 font-bold">
-            ⚠ {counts.limited} Limited
-          </span>
-          <span className="text-xs px-2 py-1 rounded-lg bg-red-50 border border-red-200 text-red-700 font-bold">
-            ✕ {counts.critical} Critical
-          </span>
-        </div>
-      </div>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterRow}>
+        <FilterPill label="All" active={filterStatus === 'All'} activeColor={colors.blue600} icon={<Filter size={13} color={filterStatus === 'All' ? colors.white : colors.slate700} />} onPress={() => setFilterStatus('All')} />
+        <FilterPill label="Available" active={filterStatus === 'Available'} activeColor={colors.emerald600} icon={<CheckCircle2 size={13} color={filterStatus === 'Available' ? colors.white : colors.slate700} />} onPress={() => setFilterStatus('Available')} />
+        <FilterPill label="Limited" active={filterStatus === 'Limited'} activeColor={colors.amber500} icon={<AlertTriangle size={13} color={filterStatus === 'Limited' ? colors.white : colors.slate700} />} onPress={() => setFilterStatus('Limited')} />
+        <FilterPill label="Critical" active={filterStatus === 'Critical'} activeColor={colors.red600} icon={<AlertOctagon size={13} color={filterStatus === 'Critical' ? colors.white : colors.slate700} />} onPress={() => setFilterStatus('Critical')} />
+      </ScrollView>
 
-      {/* ── Status Filter Row (scrollable on mobile) ── */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1">
-        <span className="text-xs text-slate-500 font-mono whitespace-nowrap flex-shrink-0">Filter:</span>
-        {statusFilters.map((sf) => (
-          <button
-            key={sf.value}
-            onClick={() => setFilterStatus(sf.value)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all whitespace-nowrap flex-shrink-0 ${
-              filterStatus === sf.value
-                ? sf.activeClass + ' shadow-sm'
-                : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-100'
-            }`}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterRow}>
+        {CATEGORIES.map((category) => (
+          <Pressable
+            key={category}
+            onPress={() => setSelectedCategory(category)}
+            style={[styles.catPill, selectedCategory === category && styles.catPillActive]}
           >
-            {sf.icon}
-            <span>{sf.label}</span>
-          </button>
+            <CategoryIcon category={category} />
+            <Text style={[styles.catText, selectedCategory === category && styles.catTextActive]}>{category}</Text>
+          </Pressable>
         ))}
-      </div>
+      </ScrollView>
 
-      {/* ── Category Pills (scrollable on mobile) ── */}
-      <div className="flex gap-2 overflow-x-auto pb-2 border-b border-slate-200">
-        {categories.map((cat) => (
-          <button
-            key={cat}
-            onClick={() => setSelectedCategory(cat)}
-            className={`px-3 py-1.5 rounded-xl border text-xs font-bold flex items-center gap-1.5 transition-all whitespace-nowrap flex-shrink-0 ${
-              selectedCategory === cat
-                ? 'bg-blue-50 text-blue-800 border-blue-300 shadow-sm'
-                : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
-            }`}
-          >
-            {getCategoryIcon(cat)}
-            <span>{cat}</span>
-          </button>
-        ))}
-      </div>
-
-      {/* ── Resource Cards Grid ── */}
-      {filteredResources.length === 0 ? (
-        <div className="py-10 text-center text-slate-400 text-sm">
-          No resources match the selected filters.
-        </div>
+      {filtered.length === 0 ? (
+        <Text style={styles.empty}>No resources match the selected filters.</Text>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {filteredResources.map((res) => (
-            <div
-              key={res.id}
-              onClick={() => cycleStatus(res.id)}
-              className={`p-4 rounded-xl border transition-all cursor-pointer select-none active:scale-95 flex flex-col justify-between min-h-[110px] ${
-                res.status === 'Available'
-                  ? 'bg-emerald-50/50 border-emerald-200 hover:border-emerald-400'
-                  : res.status === 'Limited'
-                  ? 'bg-amber-50/50 border-amber-200 hover:border-amber-400'
-                  : 'bg-red-50/60 border-red-200 hover:border-red-400'
-              }`}
-            >
-              <div>
-                <div className="flex items-start justify-between gap-2 mb-2">
-                  <div className="font-bold text-sm text-slate-900 leading-tight">{res.name}</div>
-                  <StatusBadge status={res.status} size="sm" />
-                </div>
-                <div className="text-xs text-slate-500 flex items-center gap-1">
-                  {getCategoryIcon(res.category)}
-                  <span className="line-clamp-1">{res.category}</span>
-                </div>
-              </div>
-
-              <div className="mt-3 pt-2 border-t border-slate-200/80 flex items-center justify-between">
-                <div className="text-xs font-mono">
-                  <span className="text-slate-500">Available: </span>
-                  <span
-                    className={`font-extrabold text-sm ${
-                      res.status === 'Available'
-                        ? 'text-emerald-700'
-                        : res.status === 'Limited'
-                        ? 'text-amber-700'
-                        : 'text-red-700'
-                    }`}
-                  >
-                    {res.available} / {res.total}
-                  </span>
-                </div>
-                <div className="text-[11px] text-slate-400 font-mono font-bold flex items-center gap-0.5">
-                  <span>Tap to toggle</span>
-                  <span>↺</span>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
+        <View style={styles.grid}>
+          {filtered.map((resource) => {
+            const tone =
+              resource.status === 'Available'
+                ? { bg: '#F0FDF4', border: colors.emerald200, value: colors.emerald700 }
+                : resource.status === 'Limited'
+                  ? { bg: '#FFFBEB', border: colors.amber200, value: colors.amber700 }
+                  : { bg: '#FEF2F2', border: colors.red200, value: colors.red700 };
+            return (
+              <Pressable
+                key={resource.id}
+                onPress={() => cycleStatus(resource.id)}
+                style={[styles.resource, { width: cardWidth, backgroundColor: tone.bg, borderColor: tone.border }]}
+              >
+                <View style={styles.resourceTop}>
+                  <Text style={styles.resourceName}>{resource.name}</Text>
+                  <StatusBadge status={resource.status} size="sm" />
+                </View>
+                <View style={styles.catLine}>
+                  <CategoryIcon category={resource.category} />
+                  <Text style={styles.catLineText} numberOfLines={1}>
+                    {resource.category}
+                  </Text>
+                </View>
+                <View style={styles.resourceFoot}>
+                  <Text style={styles.available}>
+                    Available <Text style={{ color: tone.value, fontFamily: fonts.extrabold }}>{resource.available} / {resource.total}</Text>
+                  </Text>
+                  <Text style={styles.tap}>Tap to toggle</Text>
+                </View>
+              </Pressable>
+            );
+          })}
+        </View>
       )}
-    </div>
+    </View>
   );
 };
+
+function FilterPill({
+  label,
+  active,
+  activeColor,
+  icon,
+  onPress,
+}: {
+  label: string;
+  active: boolean;
+  activeColor: string;
+  icon: React.ReactNode;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable onPress={onPress} style={[styles.filterPill, active && { backgroundColor: activeColor, borderColor: activeColor }]}>
+      {icon}
+      <Text style={[styles.filterText, active && styles.filterTextActive]}>{label}</Text>
+    </Pressable>
+  );
+}
+
+function CategoryIcon({ category }: { category: string }) {
+  switch (category) {
+    case 'General Capacity':
+      return <Activity size={14} color={colors.emerald600} />;
+    case 'Operation Theatre Equipment':
+      return <Stethoscope size={14} color={colors.blue600} />;
+    case 'Patient Monitoring Equipment':
+      return <ShieldCheck size={14} color={colors.cyan600} />;
+    case 'Diagnostic Imaging':
+      return <Scan size={14} color={colors.amber600} />;
+    case 'Laboratory':
+      return <Microscope size={14} color={colors.purple600} />;
+    default:
+      return <Filter size={14} color={colors.slate400} />;
+  }
+}
+
+const styles = StyleSheet.create({
+  wrap: { gap: 12 },
+  head: { flexDirection: 'row' },
+  titleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  title: { flex: 1, fontFamily: fonts.bold, fontSize: 18, color: colors.slate900 },
+  subtitle: { fontFamily: fonts.regular, fontSize: 12, color: colors.slate500 },
+  summary: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  okChip: chip(colors.emerald50, colors.emerald200, colors.emerald700),
+  limitedChip: chip(colors.amber50, colors.amber200, colors.amber700),
+  criticalChip: chip(colors.red50, colors.red200, colors.red700),
+  filterRow: { gap: 8, paddingVertical: 2 },
+  filterPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.white,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  filterText: { fontFamily: fonts.bold, fontSize: 12, color: colors.slate700 },
+  filterTextActive: { color: colors.white },
+  catPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.white,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  catPillActive: { backgroundColor: colors.blue50, borderColor: colors.blue200 },
+  catText: { fontFamily: fonts.bold, fontSize: 12, color: colors.slate600 },
+  catTextActive: { color: colors.blue800 },
+  empty: { textAlign: 'center', color: colors.slate400, fontFamily: fonts.medium, paddingVertical: 28 },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  resource: { borderWidth: 1, borderRadius: 14, padding: 14, minHeight: 120, justifyContent: 'space-between' },
+  resourceTop: { flexDirection: 'row', justifyContent: 'space-between', gap: 8, alignItems: 'flex-start' },
+  resourceName: { flex: 1, fontFamily: fonts.bold, fontSize: 14, color: colors.slate900 },
+  catLine: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 8 },
+  catLineText: { flex: 1, fontFamily: fonts.regular, fontSize: 12, color: colors.slate500 },
+  resourceFoot: {
+    marginTop: 12,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(148,163,184,0.35)',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  available: { fontFamily: fonts.regular, fontSize: 12, color: colors.slate500 },
+  tap: { fontFamily: fonts.bold, fontSize: 10, color: colors.slate400 },
+});
+
+function chip(backgroundColor: string, borderColor: string, color: string) {
+  return {
+    backgroundColor,
+    borderColor,
+    color,
+    borderWidth: 1,
+    borderRadius: 10,
+    overflow: 'hidden' as const,
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+    fontFamily: fonts.bold,
+    fontSize: 12,
+  };
+}

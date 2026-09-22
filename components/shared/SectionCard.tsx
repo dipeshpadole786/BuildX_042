@@ -1,45 +1,61 @@
 import React from 'react';
-import { clsx } from 'clsx';
+import { StyleSheet, Text, View, ViewStyle } from 'react-native';
+import { colors, fonts, shadow } from '@/lib/theme';
 
 interface SectionCardProps {
   title?: React.ReactNode;
   subtitle?: string;
   action?: React.ReactNode;
   children: React.ReactNode;
-  className?: string;
-  hoverable?: boolean;
+  style?: ViewStyle;
 }
 
-export const SectionCard: React.FC<SectionCardProps> = ({
-  title,
-  subtitle,
-  action,
-  children,
-  className,
-  hoverable = false
-}) => {
+export const SectionCard: React.FC<SectionCardProps> = ({ title, subtitle, action, children, style }) => {
   return (
-    <div
-      className={clsx(
-        "rounded-2xl p-5 border border-slate-200 bg-white shadow-sm text-slate-900",
-        hoverable && "glass-panel-hover cursor-pointer",
-        className
-      )}
-    >
+    <View style={[styles.card, style]}>
       {(title || action) && (
-        <div className="flex items-center justify-between gap-4 mb-4 pb-3 border-b border-slate-100">
-          <div>
-            {typeof title === 'string' ? (
-              <h3 className="text-lg font-bold text-slate-900 tracking-tight">{title}</h3>
-            ) : (
-              title
-            )}
-            {subtitle && <p className="text-xs text-slate-500 mt-0.5">{subtitle}</p>}
-          </div>
-          {action && <div>{action}</div>}
-        </div>
+        <View style={styles.header}>
+          <View style={styles.headerText}>
+            {typeof title === 'string' ? <Text style={styles.title}>{title}</Text> : title}
+            {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
+          </View>
+          {action ? <View>{action}</View> : null}
+        </View>
       )}
       {children}
-    </div>
+    </View>
   );
 };
+
+const styles = StyleSheet.create({
+  card: {
+    backgroundColor: colors.card,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: 16,
+    ...shadow.card,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: 12,
+    marginBottom: 14,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
+  },
+  headerText: { flex: 1, gap: 4 },
+  title: {
+    fontFamily: fonts.bold,
+    fontSize: 18,
+    color: colors.text,
+  },
+  subtitle: {
+    fontFamily: fonts.regular,
+    fontSize: 12,
+    color: colors.muted,
+    lineHeight: 17,
+  },
+});

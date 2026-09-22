@@ -1,3 +1,5 @@
+import { timeoutSignal } from './net';
+
 export interface RouteSegment {
   coordinates: [number, number][]; // Array of [lat, lng]
   distanceKm: number;
@@ -18,7 +20,7 @@ export async function fetchOsrmRoute(
 ): Promise<RouteSegment> {
   try {
     const url = `https://router.project-osrm.org/route/v1/driving/${startLng},${startLat};${endLng},${endLat}?overview=full&geometries=geojson`;
-    const response = await fetch(url, { signal: AbortSignal.timeout(4000) });
+    const response = await fetch(url, { signal: timeoutSignal(4000) });
 
     if (response.ok) {
       const data = await response.json();
@@ -41,7 +43,7 @@ export async function fetchOsrmRoute(
       }
     }
   } catch (err) {
-    console.warn("Public OSRM API fallback activated:", err);
+    console.log("Public OSRM API fallback activated:", err);
   }
 
   // Reliable offline fallback route calculation

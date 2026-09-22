@@ -243,9 +243,7 @@ function CommButton({
 const styles = StyleSheet.create({
   card: {
     backgroundColor: colors.white,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: colors.border,
+    borderRadius: 22,
     padding: 16,
     gap: 14,
     ...shadow.raised,
@@ -274,8 +272,8 @@ const styles = StyleSheet.create({
   kicker: { fontFamily: fonts.bold, fontSize: 11, color: colors.slate500, letterSpacing: 0.4, flex: 1 },
   primary: {
     backgroundColor: colors.red600,
-    borderRadius: 14,
-    minHeight: 52,
+    borderRadius: 999,
+    minHeight: 54,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',

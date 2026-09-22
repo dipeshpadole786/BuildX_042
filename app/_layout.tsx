@@ -7,9 +7,10 @@ import * as SplashScreen from 'expo-splash-screen';
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold, Inter_800ExtraBold } from '@expo-google-fonts/inter';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { Activity, Hospital, Truck, User } from 'lucide-react-native';
-import { AppHeader } from '@/components/shared/AppHeader';
-import { colors, fonts } from '@/lib/theme';
+import { BottomNavigation } from '@/components/BottomNavigation';
+import { Header } from '@/components/Header';
+import { EmergencyProvider } from '@/lib/emergency/store';
+import { colors } from '@/lib/theme';
 
 SplashScreen.preventAutoHideAsync().catch(() => undefined);
 
@@ -42,51 +43,27 @@ export default function RootLayout() {
     <GestureHandlerRootView style={styles.root}>
       <SafeAreaProvider>
         <StatusBar style="dark" />
+        <EmergencyProvider>
         <SafeAreaView style={styles.safe} edges={['top']}>
-          <AppHeader />
+          <Header />
           <View style={styles.body}>
             <Tabs
-              screenOptions={{
-                headerShown: false,
-                tabBarActiveTintColor: colors.blue700,
-                tabBarInactiveTintColor: colors.slate500,
-                tabBarHideOnKeyboard: true,
-                tabBarStyle: styles.tabBar,
-                tabBarLabelStyle: styles.tabLabel,
-              }}
+              tabBar={(props) => (
+                <BottomNavigation state={props.state} navigation={props.navigation} />
+              )}
+              screenOptions={{ headerShown: false, tabBarHideOnKeyboard: true }}
             >
-              <Tabs.Screen
-                name="index"
-                options={{
-                  title: 'Home',
-                  tabBarIcon: ({ color, size }) => <Activity color={color} size={size} />,
-                }}
-              />
-              <Tabs.Screen
-                name="ambulance"
-                options={{
-                  title: 'Driver',
-                  tabBarIcon: ({ color, size }) => <Truck color={color} size={size} />,
-                }}
-              />
-              <Tabs.Screen
-                name="hospital"
-                options={{
-                  title: 'Hospital',
-                  tabBarIcon: ({ color, size }) => <Hospital color={color} size={size} />,
-                }}
-              />
-              <Tabs.Screen
-                name="patient"
-                options={{
-                  title: 'Patient',
-                  tabBarIcon: ({ color, size }) => <User color={color} size={size} />,
-                }}
-              />
+              <Tabs.Screen name="index" options={{ title: 'Home' }} />
+              <Tabs.Screen name="ambulance" options={{ title: 'Driver' }} />
+              <Tabs.Screen name="hospital" options={{ title: 'Hospital' }} />
+              <Tabs.Screen name="patient" options={{ title: 'Patient' }} />
+              <Tabs.Screen name="blood" options={{ href: null, title: 'Blood' }} />
+              <Tabs.Screen name="surge" options={{ title: 'Surge' }} />
               <Tabs.Screen name="+not-found" options={{ href: null }} />
             </Tabs>
           </View>
         </SafeAreaView>
+        </EmergencyProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );
@@ -94,12 +71,6 @@ export default function RootLayout() {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bg },
-  safe: { flex: 1, backgroundColor: colors.white },
+  safe: { flex: 1, backgroundColor: colors.bg },
   body: { flex: 1, backgroundColor: colors.bg },
-  tabBar: {
-    backgroundColor: colors.white,
-    borderTopColor: colors.border,
-    paddingTop: 6,
-  },
-  tabLabel: { fontFamily: fonts.bold, fontSize: 11 },
 });

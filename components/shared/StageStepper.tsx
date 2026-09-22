@@ -118,20 +118,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   bubbleDone: {
-    backgroundColor: colors.emerald600,
-    borderWidth: 3,
-    borderColor: colors.emerald100,
+    backgroundColor: colors.success,
   },
   bubbleCurrent: {
-    backgroundColor: colors.blue600,
-    borderWidth: 3,
-    borderColor: colors.blue100,
-    transform: [{ scale: 1.06 }],
+    backgroundColor: colors.accent,
   },
   bubbleUpcoming: {
-    backgroundColor: '#F1F5F9',
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: colors.borderStrong,
+    borderColor: colors.border,
   },
   label: {
     marginTop: 6,

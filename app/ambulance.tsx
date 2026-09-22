@@ -187,7 +187,7 @@ export default function AmbulanceScreen() {
 
           <View style={styles.actionRow}>
             <Pressable style={styles.gpsBtn} onPress={loadPreset} disabled={isLocating}>
-              <Locate size={14} color={colors.white} />
+              <Locate size={14} color={colors.accent} />
               <Text style={styles.gpsText}>{isLocating ? 'Locating...' : 'Nagpur preset'}</Text>
             </Pressable>
             <Pressable style={styles.gpsBtn} onPress={() => {
@@ -202,12 +202,12 @@ export default function AmbulanceScreen() {
                 setIsLocating(false);
               });
             }} disabled={isLocating}>
-              <Locate size={14} color={colors.white} />
+              <Locate size={14} color={colors.accent} />
               <Text style={styles.gpsText}>Detect GPS</Text>
             </Pressable>
             <Pressable style={styles.mapBtn} onPress={() => setIsMapFullscreen(true)}>
               <Expand size={14} color={colors.white} />
-              <Text style={styles.gpsText}>Full map</Text>
+              <Text style={styles.mapText}>Full map</Text>
             </Pressable>
           </View>
         </View>
@@ -292,9 +292,7 @@ const styles = StyleSheet.create({
   content: { padding: 16, paddingBottom: 28, gap: 12 },
   headerCard: {
     backgroundColor: colors.white,
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: colors.border,
+    borderRadius: 22,
     padding: 14,
     gap: 12,
     ...shadow.card,
@@ -316,10 +314,8 @@ const styles = StyleSheet.create({
   searchRow: { flexDirection: 'row', gap: 8 },
   input: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
-    borderWidth: 1,
-    borderColor: colors.borderStrong,
-    borderRadius: 12,
+    backgroundColor: colors.bg,
+    borderRadius: 16,
     paddingHorizontal: 12,
     paddingVertical: 10,
     fontFamily: fonts.medium,
@@ -327,18 +323,18 @@ const styles = StyleSheet.create({
     color: colors.slate900,
   },
   iconBtn: {
-    width: 42,
-    borderRadius: 12,
-    backgroundColor: colors.slate800,
+    width: 48,
+    borderRadius: 24,
+    backgroundColor: colors.ink,
     alignItems: 'center',
     justifyContent: 'center',
   },
   actionRow: { flexDirection: 'row', gap: 8 },
   gpsBtn: {
     flex: 1,
-    minHeight: 38,
-    borderRadius: 12,
-    backgroundColor: colors.blue600,
+    minHeight: 44,
+    borderRadius: 999,
+    backgroundColor: colors.bg,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -347,15 +343,16 @@ const styles = StyleSheet.create({
   },
   mapBtn: {
     flex: 1,
-    minHeight: 38,
-    borderRadius: 12,
-    backgroundColor: colors.purple600,
+    minHeight: 44,
+    borderRadius: 999,
+    backgroundColor: colors.ink,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 4,
   },
-  gpsText: { color: colors.white, fontFamily: fonts.extrabold, fontSize: 11 },
+  gpsText: { color: colors.text, fontFamily: fonts.bold, fontSize: 12 },
+  mapText: { color: colors.white, fontFamily: fonts.bold, fontSize: 12 },
   fullScreen: { flex: 1, backgroundColor: colors.white },
   sheet: {
     position: 'absolute',

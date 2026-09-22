@@ -30,9 +30,7 @@ export const SectionCard: React.FC<SectionCardProps> = ({ title, subtitle, actio
 const styles = StyleSheet.create({
   card: {
     backgroundColor: colors.card,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: colors.border,
+    borderRadius: 22,
     padding: 16,
     ...shadow.card,
   },
@@ -42,9 +40,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: 12,
     marginBottom: 14,
-    paddingBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
   },
   headerText: { flex: 1, gap: 4 },
   title: {

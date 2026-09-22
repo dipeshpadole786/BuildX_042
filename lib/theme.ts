@@ -1,48 +1,80 @@
+/**
+ * Pulse design tokens.
+ * Shared language from the inspiration set: ice-blue field, white rounded
+ * surfaces, coral for the one primary action, blue for live status,
+ * yellow for waiting, and a black circle for the active tab.
+ */
 export const colors = {
-  bg: '#F8FAFC',
+  bg: '#EAF3FB',
+  surface: '#FFFFFF',
   card: '#FFFFFF',
-  text: '#0F172A',
-  muted: '#64748B',
-  slate400: '#94A3B8',
-  slate500: '#64748B',
-  slate600: '#475569',
-  slate700: '#334155',
-  slate800: '#1E293B',
-  slate900: '#0F172A',
-  border: '#E2E8F0',
-  borderStrong: '#CBD5E1',
+  text: '#16181D',
+  textSecondary: '#5C6B7A',
+  textMuted: '#8B97A6',
+  muted: '#5C6B7A',
+  border: '#E3EEF6',
+  borderStrong: '#D3E2EE',
   white: '#FFFFFF',
-  red50: '#FEF2F2',
-  red100: '#FEE2E2',
-  red200: '#FECACA',
-  red500: '#EF4444',
-  red600: '#DC2626',
-  red700: '#B91C1C',
-  red800: '#991B1B',
-  amber50: '#FFFBEB',
-  amber100: '#FEF3C7',
+  ink: '#111111',
+
+  primary: '#FF5A67',
+  primaryPressed: '#E84656',
+  primarySoft: '#FFE8EB',
+
+  accent: '#2F80ED',
+  accentSoft: '#D7F0FF',
+
+  warning: '#F5C518',
+  warningSoft: '#FFF4C8',
+
+  success: '#1F9D62',
+  successSoft: '#E5F7EE',
+
+  danger: '#FF5A67',
+  dangerSoft: '#FFE8EB',
+
+  slate400: '#8B97A6',
+  slate500: '#5C6B7A',
+  slate600: '#465463',
+  slate700: '#334155',
+  slate800: '#1F2933',
+  slate900: '#16181D',
+
+  red50: '#FFF1F3',
+  red100: '#FFE4E8',
+  red200: '#FECDD3',
+  red500: '#FF5A67',
+  red600: '#FF5A67',
+  red700: '#E11D48',
+  red800: '#BE123C',
+
+  amber50: '#FFF8DC',
+  amber100: '#FFF4C8',
   amber200: '#FDE68A',
-  amber300: '#FCD34D',
-  amber500: '#F59E0B',
-  amber600: '#D97706',
-  amber700: '#B45309',
-  amber800: '#92400E',
-  blue50: '#EFF6FF',
-  blue100: '#DBEAFE',
-  blue200: '#BFDBFE',
-  blue600: '#2563EB',
-  blue700: '#1D4ED8',
-  blue800: '#1E40AF',
-  emerald50: '#ECFDF5',
-  emerald100: '#D1FAE5',
-  emerald200: '#A7F3D0',
-  emerald500: '#10B981',
-  emerald600: '#059669',
-  emerald700: '#047857',
-  emerald800: '#065F46',
-  purple600: '#7C3AED',
-  cyan600: '#0891B2',
-  cyan200: '#A5F3FC',
+  amber300: '#F5C518',
+  amber500: '#F5C518',
+  amber600: '#C8960A',
+  amber700: '#A16207',
+  amber800: '#854D0E',
+
+  blue50: '#EAF6FF',
+  blue100: '#D7F0FF',
+  blue200: '#B9E2FF',
+  blue600: '#2F80ED',
+  blue700: '#1D6FE0',
+  blue800: '#1E4E9C',
+
+  emerald50: '#E5F7EE',
+  emerald100: '#D4F3E4',
+  emerald200: '#B4E8CE',
+  emerald500: '#1F9D62',
+  emerald600: '#1B8A56',
+  emerald700: '#166E45',
+  emerald800: '#14573A',
+
+  purple600: '#111111',
+  cyan600: '#2F80ED',
+  cyan200: '#D7F0FF',
 };
 
 export const fonts = {
@@ -53,19 +85,37 @@ export const fonts = {
   extrabold: 'Inter_800ExtraBold',
 };
 
+export const space = {
+  xs: 4,
+  sm: 8,
+  md: 12,
+  lg: 16,
+  xl: 20,
+  xxl: 24,
+  xxxl: 32,
+};
+
+export const radius = {
+  sm: 12,
+  md: 16,
+  lg: 22,
+  xl: 28,
+  pill: 999,
+};
+
 export const shadow = {
   card: {
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 4 },
+    shadowColor: '#1B3A4B',
+    shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.06,
-    shadowRadius: 12,
+    shadowRadius: 16,
     elevation: 2,
   },
   raised: {
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.12,
-    shadowRadius: 16,
-    elevation: 6,
+    shadowColor: '#1B3A4B',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.1,
+    shadowRadius: 18,
+    elevation: 4,
   },
 };

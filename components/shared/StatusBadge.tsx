@@ -19,17 +19,25 @@ interface StatusBadgeProps {
 }
 
 const CRITICAL = ['critical', 'unavailable', 'red', 'high'];
-const PROGRESS = ['in-progress', 'limited', 'yellow', 'medium', 'en route', 'dispatched'];
+const LIVE = ['in-progress', 'en route', 'dispatched'];
+const WAIT = ['limited', 'yellow', 'medium'];
 const READY = ['available', 'complete', 'green', 'low', 'picked up', 'arrived', 'ready'];
 
 export const StatusBadge: React.FC<StatusBadgeProps> = ({ status, label, size = 'md', style }) => {
   const normalized = status.toLowerCase();
-  const tone = CRITICAL.includes(normalized) ? 'critical' : PROGRESS.includes(normalized) ? 'progress' : READY.includes(normalized) ? 'ready' : 'neutral';
+  const tone = CRITICAL.includes(normalized)
+    ? 'critical'
+    : LIVE.includes(normalized)
+      ? 'live'
+      : WAIT.includes(normalized)
+        ? 'wait'
+        : READY.includes(normalized)
+          ? 'ready'
+          : 'neutral';
   const display = label || status.toUpperCase();
 
   return (
     <View style={[styles.base, styles[tone], sizeStyles[size], style]}>
-      <View style={[styles.dot, dotStyles[tone]]} />
       <Text style={[styles.label, labelStyles[tone], sizeText[size]]} numberOfLines={2}>
         {display}
       </Text>
@@ -46,12 +54,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 999,
   },
-  critical: { backgroundColor: colors.red50, borderColor: colors.red200 },
-  progress: { backgroundColor: colors.amber50, borderColor: colors.amber200 },
-  ready: { backgroundColor: colors.emerald50, borderColor: colors.emerald200 },
-  neutral: { backgroundColor: '#F1F5F9', borderColor: colors.borderStrong },
-  dot: { width: 8, height: 8, borderRadius: 4 },
-  label: { fontFamily: fonts.semibold, textTransform: 'uppercase', flexShrink: 1 },
+  critical: { backgroundColor: colors.primary, borderColor: colors.primary },
+  live: { backgroundColor: colors.accent, borderColor: colors.accent },
+  wait: { backgroundColor: colors.warning, borderColor: colors.warning },
+  ready: { backgroundColor: colors.successSoft, borderColor: colors.successSoft },
+  neutral: { backgroundColor: colors.surface, borderColor: colors.border },
+  label: { fontFamily: fonts.bold, flexShrink: 1 },
 });
 
 const sizeStyles = StyleSheet.create({
@@ -67,15 +75,11 @@ const sizeText = StyleSheet.create({
 });
 
 const labelStyles = StyleSheet.create({
-  critical: { color: colors.red700 },
-  progress: { color: colors.amber800 },
+  critical: { color: colors.white },
+  live: { color: colors.white },
+  wait: { color: colors.ink },
   ready: { color: colors.emerald800 },
-  neutral: { color: colors.slate700 },
+  neutral: { color: colors.text },
 });
 
-const dotStyles = StyleSheet.create({
-  critical: { backgroundColor: colors.red600 },
-  progress: { backgroundColor: colors.amber500 },
-  ready: { backgroundColor: colors.emerald600 },
-  neutral: { backgroundColor: colors.slate500 },
-});
+

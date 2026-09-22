@@ -108,7 +108,7 @@ export function buildLeafletDocument(): string {
         clearLayers();
         var bounds = [];
 
-        if (data.route && data.route.length > 1) {
+        if (!data.placesOnly && data.route && data.route.length > 1) {
           routeGlow = L.polyline(data.route, { color: '#0284C7', weight: 8, opacity: 0.45 }).addTo(map);
           routeLine = L.polyline(data.route, { color: '#2563EB', weight: 4, opacity: 0.95 }).addTo(map);
           data.route.forEach(function (point) { bounds.push(point); });
@@ -123,7 +123,7 @@ export function buildLeafletDocument(): string {
           return el;
         }
 
-        if (data.vehicle) {
+        if (!data.placesOnly && data.vehicle) {
           var vehicle = L.marker([data.vehicle.lat, data.vehicle.lng], {
             icon: markerIcon(dot('#F59E0B', 16), 16, [8, 8]),
             zIndexOffset: 400
@@ -134,7 +134,7 @@ export function buildLeafletDocument(): string {
           bounds.push([data.vehicle.lat, data.vehicle.lng]);
         }
 
-        if (data.origin) {
+        if (!data.placesOnly && data.origin) {
           var origin = L.marker([data.origin.lat, data.origin.lng], {
             icon: markerIcon(dot('#DC2626', 26), 26, [13, 13]),
             zIndexOffset: 500
@@ -145,7 +145,7 @@ export function buildLeafletDocument(): string {
           bounds.push([data.origin.lat, data.origin.lng]);
         }
 
-        if (data.destination) {
+        if (!data.placesOnly && data.destination) {
           var destination = L.marker([data.destination.lat, data.destination.lng], {
             icon: markerIcon(dot('#2563EB', 22), 22, [11, 11]),
             zIndexOffset: 450
@@ -157,9 +157,11 @@ export function buildLeafletDocument(): string {
         }
 
         (data.hospitals || []).forEach(function (hospital) {
-          var iconHtml = '<div style="width:26px;height:26px;border-radius:50%;background:#DC2626;border:' +
-            (hospital.isTarget ? '3px solid #FCA5A5' : '2px solid #fff') +
-            ';color:#fff;font-weight:800;font-size:16px;line-height:22px;text-align:center;box-shadow:0 2px 6px rgba(15,23,42,.35)">+</div>';
+          var pin = hospital.markerTone === 'available' ? '#1F9D62' : hospital.markerTone === 'limited' ? '#F5C518' : hospital.markerTone === 'unavailable' ? '#8B97A6' : '#DC2626';
+          var pinText = hospital.markerTone === 'limited' ? '#111' : '#fff';
+          var iconHtml = '<div style="width:26px;height:26px;border-radius:50%;background:' + pin + ';border:' +
+            (hospital.isTarget ? '3px solid #111' : '2px solid #fff') +
+            ';color:' + pinText + ';font-weight:800;font-size:16px;line-height:22px;text-align:center;box-shadow:0 2px 6px rgba(15,23,42,.35)">+</div>';
           var marker = L.marker([hospital.lat, hospital.lng], {
             icon: markerIcon(iconHtml, 26, [13, 13]),
             zIndexOffset: hospital.isTarget ? 600 : 300
@@ -168,15 +170,21 @@ export function buildLeafletDocument(): string {
           popup.className = 'pulse-popup';
           textNode(popup, 'name', hospital.name);
           textNode(popup, 'meta', hospital.address);
-          textNode(popup, 'dist', hospital.distanceKm + ' km · ' + hospital.etaMins + ' min');
-          textNode(popup, 'beds', 'Beds free: ' + hospital.generalBedsFree + ' ward / ' + hospital.icuBedsFree + ' ICU');
-          var button = document.createElement('button');
-          button.type = 'button';
-          button.textContent = hospital.isTarget ? 'Assigned hospital' : 'Set as target hospital';
-          button.onclick = function () {
-            post({ type: 'select-hospital', id: hospital.id });
-          };
-          popup.appendChild(button);
+          if (hospital.markerNote) {
+            textNode(popup, 'dist', hospital.distanceKm + ' km away');
+            textNode(popup, 'beds', hospital.markerNote);
+            if (hospital.markerUpdated) textNode(popup, 'meta', hospital.markerUpdated);
+          } else {
+            textNode(popup, 'dist', hospital.distanceKm + ' km · ' + hospital.etaMins + ' min');
+            textNode(popup, 'beds', 'Beds free: ' + hospital.generalBedsFree + ' ward / ' + hospital.icuBedsFree + ' ICU');
+            var button = document.createElement('button');
+            button.type = 'button';
+            button.textContent = hospital.isTarget ? 'Assigned hospital' : 'Set as target hospital';
+            button.onclick = function () {
+              post({ type: 'select-hospital', id: hospital.id });
+            };
+            popup.appendChild(button);
+          }
           marker.bindPopup(popup);
           marker.addTo(map);
           markers.push(marker);

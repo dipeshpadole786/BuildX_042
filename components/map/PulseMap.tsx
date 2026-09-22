@@ -3,11 +3,10 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, View, ViewStyle } from 
 import { WebView, WebViewMessageEvent } from 'react-native-webview';
 import { Clock, Globe, Locate, Maximize, Minimize, ZoomIn, ZoomOut } from 'lucide-react-native';
 import { RouteSegment } from '@/lib/osrm';
-import { Hospital } from '@/lib/mockData';
 import { colors, fonts, shadow } from '@/lib/theme';
 import { buildLeafletDocument } from '@/components/map/leafletDocument';
 
-interface PulseMapProps {
+interface PulseMapProps<T extends MapHospital> {
   startPos?: [number, number];
   ambulancePos: [number, number];
   targetPos: [number, number];
@@ -17,8 +16,11 @@ interface PulseMapProps {
   height?: number;
   interactive?: boolean;
   fullscreen?: boolean;
-  hospitals?: Hospital[];
-  onSelectHospital?: (hospital: Hospital) => void;
+  hospitals?: T[];
+  placesOnly?: boolean;
+  bannerTitle?: string;
+  bannerSubtitle?: string;
+  onSelectHospital?: (hospital: T) => void;
   onToggleFullscreen?: () => void;
   controlsBottom?: number;
   style?: ViewStyle;
@@ -30,30 +32,35 @@ interface MapPoint {
   name: string;
 }
 
+export interface MapHospital {
+  id: string;
+  name: string;
+  address: string;
+  distanceKm: number;
+  etaMins: number;
+  generalBedsFree: number;
+  icuBedsFree: number;
+  lat: number;
+  lng: number;
+  markerNote?: string;
+  markerUpdated?: string;
+  markerTone?: 'available' | 'limited' | 'unavailable';
+}
+
 interface MapPayload {
   origin: MapPoint;
   vehicle: MapPoint;
   destination: MapPoint;
   route: [number, number][];
-  hospitals: {
-    id: string;
-    name: string;
-    address: string;
-    distanceKm: number;
-    etaMins: number;
-    generalBedsFree: number;
-    icuBedsFree: number;
-    lat: number;
-    lng: number;
-    isTarget: boolean;
-  }[];
+  hospitals: (MapHospital & { isTarget: boolean })[];
   interactive: boolean;
+  placesOnly: boolean;
 }
 
 const LEAFLET_HTML = buildLeafletDocument();
 const DEFAULT_CENTER = { lat: 21.1384, lng: 79.1235 };
 
-export const PulseMap: React.FC<PulseMapProps> = ({
+export function PulseMap<T extends MapHospital>({
   startPos,
   ambulancePos,
   targetPos,
@@ -64,11 +71,14 @@ export const PulseMap: React.FC<PulseMapProps> = ({
   interactive = true,
   fullscreen = false,
   hospitals = [],
+  placesOnly = false,
+  bannerTitle,
+  bannerSubtitle,
   onSelectHospital,
   onToggleFullscreen,
   controlsBottom = 12,
   style,
-}) => {
+}: PulseMapProps<T>) {
   const webRef = useRef<WebView>(null);
   const [ready, setReady] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -99,11 +109,15 @@ export const PulseMap: React.FC<PulseMapProps> = ({
         icuBedsFree: hospital.icuBedsFree,
         lat: hospital.lat,
         lng: hospital.lng,
+        markerNote: hospital.markerNote,
+        markerUpdated: hospital.markerUpdated,
+        markerTone: hospital.markerTone,
         isTarget: Math.abs(hospital.lat - targetPos[0]) < 0.001 && Math.abs(hospital.lng - targetPos[1]) < 0.001,
       })),
       interactive,
+      placesOnly,
     };
-  }, [startPos, ambulancePos, targetPos, startName, targetName, routeData, hospitals, interactive]);
+  }, [startPos, ambulancePos, targetPos, startName, targetName, routeData, hospitals, interactive, placesOnly]);
 
   const payloadRef = useRef(payload);
   payloadRef.current = payload;
@@ -203,17 +217,17 @@ export const PulseMap: React.FC<PulseMapProps> = ({
         <View style={{ flex: 1 }}>
           <View style={styles.bannerTitleRow}>
             <Globe size={13} color={colors.blue600} />
-            <Text style={styles.bannerKicker}>LIVE OSRM NAVIGATION</Text>
+            <Text style={styles.bannerKicker}>{bannerTitle ?? 'LIVE OSRM NAVIGATION'}</Text>
           </View>
           <Text style={styles.bannerRoute} numberOfLines={1}>
-            {startName} → {targetName}
+            {bannerSubtitle ?? `${startName} → ${targetName}`}
           </Text>
         </View>
       </View>
 
       {routeData ? (
         <View style={styles.eta} pointerEvents="none">
-          <Clock size={16} color={colors.cyan200} />
+          <Clock size={16} color={colors.accent} />
           <View>
             <Text style={styles.etaLabel}>LIVE ROUTE ETA</Text>
             <Text style={styles.etaValue}>
@@ -324,10 +338,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: 'rgba(255,255,255,0.95)',
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    borderRadius: 18,
     paddingHorizontal: 10,
     paddingVertical: 8,
   },
@@ -348,15 +360,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: colors.blue600,
-    borderRadius: 14,
+    backgroundColor: colors.surface,
+    borderRadius: 18,
     paddingHorizontal: 10,
     paddingVertical: 8,
     ...shadow.raised,
   },
-  etaLabel: { color: '#DBEAFE', fontFamily: fonts.semibold, fontSize: 9, letterSpacing: 0.4 },
-  etaValue: { color: colors.white, fontFamily: fonts.extrabold, fontSize: 14 },
-  etaKm: { color: '#DBEAFE', fontFamily: fonts.medium, fontSize: 11 },
+  etaLabel: { color: colors.textMuted, fontFamily: fonts.semibold, fontSize: 9, letterSpacing: 0.4 },
+  etaValue: { color: colors.accent, fontFamily: fonts.extrabold, fontSize: 14 },
+  etaKm: { color: colors.textSecondary, fontFamily: fonts.medium, fontSize: 11 },
   loading: {
     position: 'absolute',
     top: 0,
